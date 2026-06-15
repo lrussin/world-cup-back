@@ -38,7 +38,9 @@ public record PredictionDto(int MatchId, int GolsMandante, int GolsVisitante, in
 public record SavePredictionRequest(int MatchId, int GolsMandante, int GolsVisitante);
 
 /// <summary>Palpite de outro participante — visivel apenas apos o inicio da partida.</summary>
-public record OtherPredictionDto(string Nome, int GolsMandante, int GolsVisitante, int PontosObtidos);
+public record OtherPredictionDto(
+    string Nome, int GolsMandante, int GolsVisitante, int PontosObtidos,
+    DateTime CriadoEm, DateTime AtualizadoEm);
 
 // ---------- Classificacao dos grupos ----------
 public record GroupBetDto(string Grupo, int? PrimeiroTeamId, int? SegundoTeamId, int PontosObtidos);

@@ -66,6 +66,7 @@ public class AdminController : ControllerBase
         match.GolsMandante = req.GolsMandante;
         match.GolsVisitante = req.GolsVisitante;
         match.Encerrado = true;
+        match.ResultadoManual = true;
 
         // Apuracao: recalcula os pontos de todos os palpites deste jogo (5 / 3 / 0).
         var preds = await _db.Predictions.Where(p => p.MatchId == id).ToListAsync();
@@ -86,6 +87,7 @@ public class AdminController : ControllerBase
         match.Encerrado = false;
         match.GolsMandante = null;
         match.GolsVisitante = null;
+        match.ResultadoManual = false;
 
         var preds = await _db.Predictions.Where(p => p.MatchId == id).ToListAsync();
         foreach (var p in preds) p.PontosObtidos = 0;

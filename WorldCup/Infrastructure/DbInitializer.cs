@@ -476,14 +476,15 @@ public static class DbInitializer
                 var sT = teams.FirstOrDefault(t => t.Grupo == grupo && Normalizar(t.Nome) == Normalizar(segundo));
                 if (pT is null || sT is null) continue;
 
-                var bet = db.GroupQualifierBets.FirstOrDefault(b => b.UserId == user.Id && b.Grupo == grupo);
-                if (bet is null)
+                // So insere se ainda NAO existe — nunca sobrescreve.
+                if (db.GroupQualifierBets.Any(b => b.UserId == user.Id && b.Grupo == grupo)) continue;
+                db.GroupQualifierBets.Add(new GroupQualifierBet
                 {
-                    bet = new GroupQualifierBet { UserId = user.Id, Grupo = grupo };
-                    db.GroupQualifierBets.Add(bet);
-                }
-                bet.PrimeiroTeamId = pT.Id;
-                bet.SegundoTeamId = sT.Id;
+                    UserId = user.Id,
+                    Grupo = grupo,
+                    PrimeiroTeamId = pT.Id,
+                    SegundoTeamId = sT.Id
+                });
             }
         }
         db.SaveChanges();
@@ -574,33 +575,37 @@ public static class DbInitializer
             var match = matches.FirstOrDefault(m => m.HomeTeamId == homeTeam.Id && m.AwayTeamId == awayTeam.Id);
             if (match is null) continue;
 
-            // Resultado oficial (planilha sobrescreve). Sem placar (null) = jogo ainda nao aconteceu.
-            var temResultado = gh.HasValue && ga.HasValue;
-            match.GolsMandante = gh;
-            match.GolsVisitante = ga;
-            match.Encerrado = temResultado;
+            // Resultado: a planilha e a fonte historica (sobrescreve ate o openfootball), MAS nunca
+            // mexe num resultado lancado manualmente pelo admin no app (ResultadoManual).
+            if (!match.ResultadoManual)
+            {
+                match.GolsMandante = gh;
+                match.GolsVisitante = ga;
+                match.Encerrado = gh.HasValue && ga.HasValue;
+            }
 
             foreach (var (email, ph, pa) in palpites)
             {
                 var user = db.Users.FirstOrDefault(u => u.Email == email.Trim().ToLowerInvariant());
                 if (user is null) continue;
 
-                var pred = db.Predictions.FirstOrDefault(p => p.UserId == user.Id && p.MatchId == match.Id);
-                if (pred is null)
+                // So insere se ainda NAO existe — nunca sobrescreve palpite feito no site.
+                if (db.Predictions.Any(p => p.UserId == user.Id && p.MatchId == match.Id)) continue;
+
+                var agora = DateTime.UtcNow;
+                var pontos = match.Encerrado && match.GolsMandante is int rh && match.GolsVisitante is int ra
+                    ? (ph == rh && pa == ra ? ptExato : Math.Sign(ph - pa) == Math.Sign(rh - ra) ? ptResultado : 0)
+                    : 0;
+                db.Predictions.Add(new Prediction
                 {
-                    pred = new Prediction { UserId = user.Id, MatchId = match.Id, CriadoEm = DateTime.UtcNow };
-                    db.Predictions.Add(pred);
-                }
-                pred.GolsMandantePalpite = ph;
-                pred.GolsVisitantePalpite = pa;
-                pred.AtualizadoEm = DateTime.UtcNow;
-                pred.PontosObtidos = !temResultado
-                    ? 0
-                    : ph == gh!.Value && pa == ga!.Value
-                        ? ptExato
-                        : Math.Sign(ph - pa) == Math.Sign(gh!.Value - ga!.Value)
-                            ? ptResultado
-                            : 0;
+                    UserId = user.Id,
+                    MatchId = match.Id,
+                    GolsMandantePalpite = ph,
+                    GolsVisitantePalpite = pa,
+                    PontosObtidos = pontos,
+                    CriadoEm = agora,
+                    AtualizadoEm = agora
+                });
             }
         }
         db.SaveChanges();

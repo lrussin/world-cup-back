@@ -26,5 +26,8 @@ public class Match
     /// <summary>Marcado quando o admin lanca o resultado oficial e os pontos sao apurados.</summary>
     public bool Encerrado { get; set; }
 
+    /// <summary>Resultado lancado manualmente pelo admin no app — o seed/import nunca sobrescreve.</summary>
+    public bool ResultadoManual { get; set; }
+
     public ICollection<Prediction> Predictions { get; set; } = new List<Prediction>();
 }

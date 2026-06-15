@@ -71,7 +71,9 @@ public class MatchesController : ControllerBase
             .Include(p => p.User)
             .Where(p => p.MatchId == id)
             .OrderByDescending(p => p.PontosObtidos)
-            .Select(p => new OtherPredictionDto(p.User!.Nome, p.GolsMandantePalpite, p.GolsVisitantePalpite, p.PontosObtidos))
+            .Select(p => new OtherPredictionDto(
+                p.User!.Nome, p.GolsMandantePalpite, p.GolsVisitantePalpite, p.PontosObtidos,
+                p.CriadoEm, p.AtualizadoEm))
             .ToListAsync();
 
         return Ok(preds);
