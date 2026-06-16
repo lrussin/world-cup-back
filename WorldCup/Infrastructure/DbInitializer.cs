@@ -562,6 +562,26 @@ public static class DbInitializer
                 ("jefferson.vieiraaa27@gmail.com",1,2),("maiconmix1103@gmail.com",1,0),("toniind15330203@gmail.com",2,1),
                 ("lucas.henri.sfs@hotmail.com",1,0),("paulovini669@gmail.com",2,1),("juliogabriel1581@gmail.com",2,0),
                 ("arthuralexandre451@gmail.com",1,0),("leizcarvalho@gmail.com",1,1),("pedro.silva.r12@gmail.com",2,1) }),
+            ("Espanha", "Cabo Verde", null, null, new (string, int, int)[] {
+                ("pedro.silva.r12@gmail.com",3,0),("alvesmaike019@gmail.com",3,0),("leizcarvalho@gmail.com",4,0),
+                ("guilhermeflaviano95@gmail.com",3,0),("paulovini669@gmail.com",2,0),("maiconmix1103@gmail.com",5,0),
+                ("lucas.henri.sfs@hotmail.com",5,0),("arthuralexandre451@gmail.com",3,0),("arialsharon@gmail.com",4,0),
+                ("jefferson.vieiraaa27@gmail.com",4,0),("toniind15330203@gmail.com",3,1),("juliogabriel1581@gmail.com",3,0) }),
+            ("Belgica", "Egito", null, null, new (string, int, int)[] {
+                ("pedro.silva.r12@gmail.com",0,2),("alvesmaike019@gmail.com",2,1),("leizcarvalho@gmail.com",2,1),
+                ("guilhermeflaviano95@gmail.com",2,1),("paulovini669@gmail.com",2,1),("maiconmix1103@gmail.com",1,2),
+                ("lucas.henri.sfs@hotmail.com",2,1),("arthuralexandre451@gmail.com",2,0),("arialsharon@gmail.com",3,1),
+                ("jefferson.vieiraaa27@gmail.com",2,1),("toniind15330203@gmail.com",2,0),("juliogabriel1581@gmail.com",2,1) }),
+            ("Arabia Saudita", "Uruguai", null, null, new (string, int, int)[] {
+                ("pedro.silva.r12@gmail.com",1,2),("alvesmaike019@gmail.com",2,1),("leizcarvalho@gmail.com",0,2),
+                ("guilhermeflaviano95@gmail.com",1,1),("paulovini669@gmail.com",1,1),("maiconmix1103@gmail.com",1,3),
+                ("lucas.henri.sfs@hotmail.com",1,2),("arthuralexandre451@gmail.com",1,1),("arialsharon@gmail.com",2,1),
+                ("jefferson.vieiraaa27@gmail.com",1,1),("toniind15330203@gmail.com",1,2),("juliogabriel1581@gmail.com",0,2) }),
+            ("Ira", "Nova Zelandia", null, null, new (string, int, int)[] {
+                ("pedro.silva.r12@gmail.com",1,2),("alvesmaike019@gmail.com",2,0),("leizcarvalho@gmail.com",2,0),
+                ("guilhermeflaviano95@gmail.com",1,1),("paulovini669@gmail.com",1,1),("maiconmix1103@gmail.com",0,0),
+                ("lucas.henri.sfs@hotmail.com",1,0),("arthuralexandre451@gmail.com",0,1),("arialsharon@gmail.com",0,1),
+                ("jefferson.vieiraaa27@gmail.com",2,0),("toniind15330203@gmail.com",1,1),("juliogabriel1581@gmail.com",2,0) }),
         };
 
         var teams = db.Teams.ToList();
