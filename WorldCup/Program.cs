@@ -104,12 +104,12 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Importa as escolhas de artilheiro e melhor jogador do formulario (idempotente; nao sobrescreve).
-    DbInitializer.SeedSpecialBetsArtilheiro(db);
-    DbInitializer.SeedSpecialBetsMelhorJogador(db);
-    DbInitializer.SeedSpecialBetsCampeao(db);
-    DbInitializer.SeedJogos(db);
-    DbInitializer.SeedGroupBets(db);
+    // Seeds de dados (palpites/resultados/apostas) NAO rodam mais no startup: os dados ja estao
+    // no banco e re-rodar sobrescrevia ajustes (ex.: SeedJogos reescrevia placar). Os metodos
+    // continuam em DbInitializer para re-seed manual de um banco novo, se necessario.
+
+    // Knockout: cria os 32 jogos do mata-mata sem times (admin define). Idempotente por Num.
+    DbInitializer.SeedKnockout(db);
 }
 
 if (app.Environment.IsDevelopment())

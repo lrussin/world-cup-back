@@ -62,19 +62,106 @@ public class AdminController : ControllerBase
         var match = await _db.Matches.FindAsync(id);
         if (match is null) return NotFound(new { message = "Jogo nao encontrado." });
 
+        // Mata-mata: exige informar quem avancou (pode diferir do placar — penaltis).
+        var isMataMata = match.Num != null;
+        if (isMataMata)
+        {
+            if (match.HomeTeamId is null || match.AwayTeamId is null)
+                return BadRequest(new { message = "Defina os dois times do confronto antes de lancar o resultado." });
+            if (req.VencedorTeamId is not { } v || (v != match.HomeTeamId && v != match.AwayTeamId))
+                return BadRequest(new { message = "Informe qual time avancou (um dos dois do confronto)." });
+        }
+
         var cfg = await GetSettingsAsync();
         match.GolsMandante = req.GolsMandante;
         match.GolsVisitante = req.GolsVisitante;
         match.Encerrado = true;
         match.ResultadoManual = true;
+        if (isMataMata) match.VencedorTeamId = req.VencedorTeamId;
 
         // Apuracao: recalcula os pontos de todos os palpites deste jogo (5 / 3 / 0).
         var preds = await _db.Predictions.Where(p => p.MatchId == id).ToListAsync();
         foreach (var p in preds)
             p.PontosObtidos = _scoring.PontosDoPalpite(req.GolsMandante, req.GolsVisitante, p.GolsMandantePalpite, p.GolsVisitantePalpite, cfg);
 
+        // Propaga o vencedor (e perdedor, no 3o lugar) para os jogos seguintes do chaveamento.
+        if (isMataMata) await PropagarAvancoAsync(match);
+
         await _db.SaveChangesAsync();
         return Ok(new { message = $"Resultado lancado. {preds.Count} palpite(s) apurado(s)." });
+    }
+
+    /// <summary>Define (ou limpa) os dois times de um confronto de mata-mata. Uso manual na Rodada de 32.</summary>
+    [HttpPut("api/matches/{id:int}/teams")]
+    public async Task<IActionResult> SetMatchTeams(int id, SetMatchTeamsRequest req)
+    {
+        var match = await _db.Matches.FindAsync(id);
+        if (match is null) return NotFound(new { message = "Jogo nao encontrado." });
+        if (match.Num is null) return BadRequest(new { message = "So jogos de mata-mata tem times definidos manualmente." });
+        if (req.HomeTeamId is { } h && req.AwayTeamId is { } a && h == a)
+            return BadRequest(new { message = "Os dois times devem ser diferentes." });
+
+        var mudou = match.HomeTeamId != req.HomeTeamId || match.AwayTeamId != req.AwayTeamId;
+        match.HomeTeamId = req.HomeTeamId;
+        match.AwayTeamId = req.AwayTeamId;
+
+        // Trocou o confronto -> palpites antigos eram de outro jogo: removidos.
+        if (mudou)
+        {
+            var preds = await _db.Predictions.Where(p => p.MatchId == id).ToListAsync();
+            if (preds.Count > 0) _db.Predictions.RemoveRange(preds);
+        }
+
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "Times do confronto atualizados." });
+    }
+
+    /// <summary>
+    /// Preenche as vagas 1o/2o da Rodada de 32 a partir dos resultados de grupo ja lancados.
+    /// Nao mexe em vagas ja preenchidas nem nos melhores terceiros (manuais).
+    /// </summary>
+    [HttpPost("api/admin/bracket/fill-r32")]
+    public async Task<IActionResult> FillR32()
+    {
+        var grs = await _db.GroupResults.AsNoTracking().ToDictionaryAsync(g => g.Grupo);
+        var matches = await _db.Matches.Where(m => m.Num != null && m.Num >= 73 && m.Num <= 88).ToListAsync();
+        var byNum = matches.ToDictionary(m => m.Num!.Value);
+
+        int? Resolve(BracketConfig.R32Slot? slot)
+        {
+            if (slot is null || slot.IsThird || slot.Grupo is null) return null;
+            if (!grs.TryGetValue(slot.Grupo, out var gr)) return null;
+            return slot.Pos == 1 ? gr.PrimeiroTeamId : gr.SegundoTeamId;
+        }
+
+        var preenchidos = 0;
+        foreach (var cfg in BracketConfig.Games.Where(g => g.Num is >= 73 and <= 88))
+        {
+            if (!byNum.TryGetValue(cfg.Num, out var m)) continue;
+            if (m.HomeTeamId is null && Resolve(cfg.HomeR32) is { } h) { m.HomeTeamId = h; preenchidos++; }
+            if (m.AwayTeamId is null && Resolve(cfg.AwayR32) is { } a) { m.AwayTeamId = a; preenchidos++; }
+        }
+        await _db.SaveChangesAsync();
+        return Ok(new { message = $"{preenchidos} vaga(s) preenchida(s) pelos grupos. Terceiros ficam manuais.", preenchidos });
+    }
+
+    /// <summary>Preenche o lado correspondente dos jogos seguintes com o vencedor/perdedor deste.</summary>
+    private async Task PropagarAvancoAsync(Domain.Entities.Match match)
+    {
+        if (match.Num is not { } num || match.VencedorTeamId is not { } vencedor) return;
+        var perdedor = match.HomeTeamId == vencedor ? match.AwayTeamId : match.HomeTeamId;
+
+        foreach (var g in BracketConfig.Games)
+        {
+            var setHome = g.Home is { } sh && sh.Num == num;
+            var setAway = g.Away is { } sa && sa.Num == num;
+            if (!setHome && !setAway) continue;
+
+            var child = await _db.Matches.FirstOrDefaultAsync(m => m.Num == g.Num);
+            if (child is null) continue;
+            if (setHome) child.HomeTeamId = g.Home!.Loser ? perdedor : vencedor;
+            if (setAway) child.AwayTeamId = g.Away!.Loser ? perdedor : vencedor;
+        }
     }
 
     /// <summary>Reverte o resultado: marca o jogo como "em andamento" (sem placar) e zera os pontos apurados.</summary>
@@ -88,6 +175,7 @@ public class AdminController : ControllerBase
         match.GolsMandante = null;
         match.GolsVisitante = null;
         match.ResultadoManual = false;
+        match.VencedorTeamId = null;
 
         var preds = await _db.Predictions.Where(p => p.MatchId == id).ToListAsync();
         foreach (var p in preds) p.PontosObtidos = 0;

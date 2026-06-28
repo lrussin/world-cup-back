@@ -53,7 +53,8 @@ public class AppDbContext : DbContext
         b.Entity<Match>(e =>
         {
             e.Property(m => m.Grupo).HasMaxLength(2);
-            // Duas FKs para Team na mesma tabela -> Restrict para evitar multiplos caminhos de cascade.
+            // FKs para Team na mesma tabela -> Restrict para evitar multiplos caminhos de cascade.
+            // Nullable no mata-mata (confronto sem times definidos ainda).
             e.HasOne(m => m.HomeTeam)
                 .WithMany()
                 .HasForeignKey(m => m.HomeTeamId)
@@ -61,6 +62,10 @@ public class AppDbContext : DbContext
             e.HasOne(m => m.AwayTeam)
                 .WithMany()
                 .HasForeignKey(m => m.AwayTeamId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(m => m.Vencedor)
+                .WithMany()
+                .HasForeignKey(m => m.VencedorTeamId)
                 .OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(m => m.DataHoraUtc);
         });

@@ -6,13 +6,21 @@ public class Match
 {
     public int Id { get; set; }
 
-    public int HomeTeamId { get; set; }
+    // Nullable: no mata-mata o confronto pode existir antes dos times serem conhecidos.
+    public int? HomeTeamId { get; set; }
     public Team? HomeTeam { get; set; }
 
-    public int AwayTeamId { get; set; }
+    public int? AwayTeamId { get; set; }
     public Team? AwayTeam { get; set; }
 
     public Fase Fase { get; set; } = Fase.Grupos;
+
+    /// <summary>Id do confronto no chaveamento (73..104). Null nos jogos de grupo.</summary>
+    public int? Num { get; set; }
+
+    /// <summary>Time que avancou (mata-mata). Pode diferir do placar (penaltis).</summary>
+    public int? VencedorTeamId { get; set; }
+    public Team? Vencedor { get; set; }
 
     /// <summary>Letra do grupo (A..L) para jogos da fase de grupos. Vazio no mata-mata.</summary>
     public string Grupo { get; set; } = string.Empty;

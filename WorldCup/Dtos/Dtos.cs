@@ -26,13 +26,32 @@ public record MatchDto(
     int Id,
     string Grupo,
     DateTime DataHoraUtc,
-    TeamDto HomeTeam,
-    TeamDto AwayTeam,
+    TeamDto? HomeTeam,
+    TeamDto? AwayTeam,
     int? GolsMandante,
     int? GolsVisitante,
     bool Encerrado,
     bool Travado,
-    PredictionDto? MeuPalpite);
+    PredictionDto? MeuPalpite,
+    string Fase,
+    string Rodada);
+
+/// <summary>Um confronto do chaveamento (mata-mata) com estado completo.</summary>
+public record BracketMatchDto(
+    int Id,
+    int Num,
+    string Rodada,
+    DateTime DataHoraUtc,
+    TeamDto? HomeTeam,
+    TeamDto? AwayTeam,
+    int? GolsMandante,
+    int? GolsVisitante,
+    bool Encerrado,
+    bool Travado,
+    int? VencedorTeamId,
+    PredictionDto? MeuPalpite,
+    string HomeSlot,
+    string AwaySlot);
 
 public record PredictionDto(int MatchId, int GolsMandante, int GolsVisitante, int PontosObtidos);
 public record SavePredictionRequest(int MatchId, int GolsMandante, int GolsVisitante);
@@ -89,7 +108,8 @@ public record RankingDto(string RegraDesempate, List<RankingEntryDto> Entries);
 // ---------- Admin ----------
 public record AdminUserDto(int Id, string Nome, string Email, bool IsAdmin, bool Pago, int PontosTotal);
 public record SetPaymentRequest(bool Pago);
-public record SetMatchResultRequest(int GolsMandante, int GolsVisitante);
+public record SetMatchResultRequest(int GolsMandante, int GolsVisitante, int? VencedorTeamId = null);
+public record SetMatchTeamsRequest(int? HomeTeamId, int? AwayTeamId);
 public record SetGroupResultRequest(int PrimeiroTeamId, int SegundoTeamId);
 public record SetTournamentResultRequest(int? CampeaoTeamId, int? ArtilheiroPlayerId, int? MelhorJogadorPlayerId);
 public record UpdateSettingsRequest(

@@ -631,6 +631,26 @@ public static class DbInitializer
         db.SaveChanges();
     }
 
+    /// <summary>Cria os 32 jogos do mata-mata (sem times — admin define). Nao-destrutivo (por Num).</summary>
+    public static void SeedKnockout(AppDbContext db)
+    {
+        var existentes = db.Matches.Where(m => m.Num != null).Select(m => m.Num!.Value).ToHashSet();
+        var novos = false;
+        foreach (var g in BracketConfig.Games)
+        {
+            if (existentes.Contains(g.Num)) continue;
+            db.Matches.Add(new Domain.Entities.Match
+            {
+                Num = g.Num,
+                Fase = g.Fase,
+                Grupo = string.Empty,
+                DataHoraUtc = BracketConfig.ParseUtc(g.Date, g.Time),
+            });
+            novos = true;
+        }
+        if (novos) db.SaveChanges();
+    }
+
     /// <summary>Remove acentos e baixa para minusculo (para casar nomes independente de acentuacao).</summary>
     private static string Normalizar(string s)
     {

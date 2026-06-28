@@ -11,5 +11,6 @@ public enum Fase
     Quartas = 2,
     Semifinais = 3,
     TerceiroLugar = 4,
-    Final = 5
+    Final = 5,
+    RodadaDe32 = 6
 }
