@@ -74,7 +74,9 @@ public class StatusController : ControllerBase
         var games = await _db.Matches.AsNoTracking()
             .Include(m => m.HomeTeam)
             .Include(m => m.AwayTeam)
-            .Where(m => m.Fase == Fase.Grupos)
+            // Grupos + jogos de mata-mata que ja tem os dois times definidos (palpitaveis).
+            .Where(m => m.Fase == Fase.Grupos
+                        || (m.Num != null && m.HomeTeamId != null && m.AwayTeamId != null))
             .OrderBy(m => m.DataHoraUtc)
             .ToListAsync();
 
